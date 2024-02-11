@@ -1,0 +1,53 @@
+{
+  "name": "zeebe-kafka-worker",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/zeebe-kafka-worker/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/zeebe-kafka-worker",
+        "main": "apps/zeebe-kafka-worker/src/main.ts",
+        "tsConfig": "apps/zeebe-kafka-worker/tsconfig.app.json",
+        "assets": ["apps/zeebe-kafka-worker/src/assets"],
+        "webpackConfig": "apps/zeebe-kafka-worker/webpack.config.js",
+        "generatePackageJson": true
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "generateLockfile": true
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "zeebe-kafka-worker:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "zeebe-kafka-worker:build:development"
+        },
+        "production": {
+          "buildTarget": "zeebe-kafka-worker:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "docker-build": {
+      "dependsOn": ["build"],
+      "command": "docker build -f apps/zeebe-kafka-worker/Dockerfile . -t zeebe-kafka-worker"
+    }
+  },
+  "tags": []
+}

@@ -1,0 +1,68 @@
+version: '3.9'
+services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+
+  zeebe-kafka-worker:
+    image: zeebe-kafka-worker:latest
+    deploy:
+      replicas: 3
+    environment:
+      ZEEBE_GATEWAY_ADDRESS: zeebe:26500
+    depends_on:
+      - zeebe
+
+  zeebe-play:
+    image: ghcr.io/camunda-community-hub/zeebe-play:1.10.1
+    environment:
+      ZEEBE_ENGINE: remote
+      ZEEBE_CLIENT_BROKER_GATEWAYADDRESS: zeebe:26500
+      ZEEBE_CLOCK_ENDPOINT: zeebe:9600/actuator/clock
+      ZEEBE_CLIENT_WORKER_HAZELCAST_CONNECTION: zeebe:5701
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-zeebe-play:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: zeebe
+      SPRING_DATASOURCE_DRIVERCLASSNAME: org.postgresql.Driver
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_HIBERNATE_DLL_AUTO: create
+      VIRTUAL_HOST: zeebe-play.local
+      VIRTUAL_PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - zeebe
+      - postgres-zeebe-play
+
+  zeebe:
+    #image: ghcr.io/camunda-community-hub/zeebe-with-hazelcast-exporter:8.0.5
+    image: ghcr.io/camunda-community-hub/zeebe-with-hazelcast-exporter:8.2.0
+    environment:
+      ZEEBE_LOG_LEVEL: debug
+      ZEEBE_CLOCK_CONTROLLED: 'true'
+    ports:
+      - "26500:26500"
+      - "5701:5701"
+    volumes:
+      - zeebe-data:/usr/local/zeebe/data
+  
+  postgres-zeebe-play:
+    image: postgres:12.2
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: zeebe
+    volumes:
+      - zeebe-play-data:/var/lib/postgresql/data
+
+volumes:
+  zeebe-data:
+  zeebe-play-data:
+
+networks:
+  default:
+    name: zeebe_network
+    driver: bridge
