@@ -5,6 +5,7 @@
   "scripts": {},
   "private": true,
   "dependencies": {
+    "kafkajs": "^2.2.4",
     "tslib": "^2.3.0",
     "zeebe-node": "8.3.1"
   },

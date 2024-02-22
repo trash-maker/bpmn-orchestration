@@ -37,7 +37,29 @@ Open http://zeebe-play.local/view/deployment in your preferred browser.
 
 Deploy the sample bpmn process `/bpmn/test.bpmn`
 
-Open the loaded process definition and run an instance.
+Open the loaded process definition and run an instance with following parameters:
+```json
+{
+  "kafka.publishTopic": "REQ_TOPIC",
+  "kafka.receiveTopic": "RES_TOPIC",
+  "kafka.message": { "payload": { "name": "luke" } }
+}
+```
+
+See worker publish messages on kafka topic `REQ_TOPIC` with proper `correltionID` header.
+
+```
+kafka-console-consumer.sh --bootstrap-server kafka:9092 --from-beginning --topic REQ_TOPIC --property print.key=true --property print.headers=true
+```
+
+Publish message on kafka topic `RES_TOPIC` with proper `correltionID` header to see process complete.
+
+```
+kafka-console-producer.sh --bootstrap-server kafka:9092 --topic RES_TOPIC --property parse.headers=true
+
+> correlationID:xxxxx "SUCCESS"
+```
+
 
 ---
 Shared with 💜 by `trash-maker`

@@ -14,8 +14,11 @@ services:
       replicas: 3
     environment:
       ZEEBE_GATEWAY_ADDRESS: zeebe:26500
+      KAFKA_BROKERS: kafka:9092
     depends_on:
       - zeebe
+      - kafka
+      - init-kafka
 
   zeebe-play:
     image: ghcr.io/camunda-community-hub/zeebe-play:1.10.1
@@ -58,11 +61,56 @@ services:
     volumes:
       - zeebe-play-data:/var/lib/postgresql/data
 
+# kafka environment
+  zookeeper:
+    image: docker.io/bitnami/zookeeper:3.8
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper-volume:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: docker.io/bitnami/kafka:3.3
+    ports:
+      - "9093:9093"
+    volumes:
+      - "kafka-volume:/bitnami"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=CLIENT
+    depends_on:
+      - zookeeper
+
+  init-kafka:
+    image: docker.io/bitnami/kafka:3.3
+    depends_on:
+      - kafka
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics.sh --bootstrap-server kafka:9092 --list
+
+      echo -e 'Creating kafka topics'
+      kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic REQ_TOPIC --replication-factor 1 --partitions 1
+      kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic RES_TOPIC --replication-factor 1 --partitions 1
+
+      echo -e 'Successfully created the following topics:'
+      kafka-topics.sh --bootstrap-server kafka:9092 --list
+      "
 volumes:
   zeebe-data:
   zeebe-play-data:
+  kafka-volume:
+  zookeeper-volume:
 
 networks:
   default:
-    name: zeebe_network
+    name: bpmn-orchestration_network
     driver: bridge
