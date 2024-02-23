@@ -1,0 +1,53 @@
+{
+  "name": "booking-api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/booking-api/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/booking-api",
+        "main": "apps/booking-api/src/main.ts",
+        "tsConfig": "apps/booking-api/tsconfig.app.json",
+        "assets": ["apps/booking-api/src/assets"],
+        "webpackConfig": "apps/booking-api/webpack.config.js",
+        "generatePackageJson": true
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "generateLockfile": true
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "booking-api:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "booking-api:build:development"
+        },
+        "production": {
+          "buildTarget": "booking-api:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "docker-build": {
+      "dependsOn": ["build"],
+      "command": "docker build -f apps/booking-api/Dockerfile . -t booking-api"
+    }
+  },
+  "tags": []
+}

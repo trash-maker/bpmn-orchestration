@@ -34,7 +34,7 @@ async function kafkaSendReceive(
   await kafka.send(publishTopic, {
     headers: message.headers,
     key: correlationID,
-    payload: JSON.stringify(message.payload),
+    payload: message.payload,
   });
 
   // simulate subscribe and receive response message (same correlationID)

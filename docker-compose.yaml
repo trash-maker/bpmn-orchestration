@@ -8,6 +8,23 @@ services:
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
 
+  booking-api:
+    image: booking-api:latest
+    deploy:
+      replicas: 3
+    expose:
+      - 3000
+    environment:
+      VIRTUAL_HOST: booking-api.local
+      VIRTUAL_PORT: 3000
+      PORT: 3000
+      KAFKA_BROKERS: kafka:9092
+      RECEIVE_TOPIC: REQ_TOPIC
+      SEND_TOPIC: RES_TOPIC
+    depends_on:
+      - kafka
+      - init-kafka
+
   zeebe-kafka-worker:
     image: zeebe-kafka-worker:latest
     deploy:
@@ -52,7 +69,7 @@ services:
       - "5701:5701"
     volumes:
       - zeebe-data:/usr/local/zeebe/data
-  
+
   postgres-zeebe-play:
     image: postgres:12.2
     restart: always
@@ -61,7 +78,7 @@ services:
     volumes:
       - zeebe-play-data:/var/lib/postgresql/data
 
-# kafka environment
+  # kafka environment
   zookeeper:
     image: docker.io/bitnami/zookeeper:3.8
     ports:
@@ -109,6 +126,7 @@ volumes:
   zeebe-play-data:
   kafka-volume:
   zookeeper-volume:
+
 
 networks:
   default:
