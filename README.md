@@ -46,20 +46,10 @@ Open the loaded process definition and run an instance with following parameters
 }
 ```
 
-See worker publish messages on kafka topic `REQ_TOPIC` with proper `correltionID` header.
-
+See the orchestrated microservice been called and execute the work:
 ```
-kafka-console-consumer.sh --bootstrap-server kafka:9092 --from-beginning --topic REQ_TOPIC --property print.key=true --property print.headers=true
+docker-compose logs -f booking-api
 ```
-
-Publish message on kafka topic `RES_TOPIC` with proper `correltionID` header to see process complete.
-
-```
-kafka-console-producer.sh --bootstrap-server kafka:9092 --topic RES_TOPIC --property parse.headers=true
-
-> correlationID:xxxxx "SUCCESS"
-```
-
 
 ---
 Shared with 💜 by `trash-maker`
