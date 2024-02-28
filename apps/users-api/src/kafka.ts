@@ -1,8 +1,14 @@
 import { Kafka } from 'kafkajs';
 
+function uuid(length = 32): string {
+  return Array(length)
+    .fill('')
+    .map((v) => Math.random().toString(16).charAt(2))
+    .join('');
+}
 
 export async function registerToKafkaBroker() {
-  const clientId = 'booking-api';
+  const clientId = 'register-user';
   const kafka = new Kafka({
       clientId,
       brokers: (process.env.KAFKA_BROKERS || 'localhost:9092').split(','),
@@ -43,9 +49,9 @@ export async function registerToKafkaBroker() {
             },
             key: correlationID,
             value: JSON.stringify({
-              name: payload?.name || 'unknown',
-              booked: new Date(),
-              confirmed: payload !== undefined,
+              uuid: uuid(),
+              username: payload?.username || 'unknown',
+              created: new Date(),
             }),
           },
         ],

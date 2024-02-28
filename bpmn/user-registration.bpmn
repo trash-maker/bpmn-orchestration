@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0ug0cgf" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.20.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="1.3.0">
+  <bpmn:process id="user-registration" name="user registration process" isExecutable="true">
+    <bpmn:startEvent id="start" name="user registration start">
+      <bpmn:outgoing>Flow_1i2580g</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="register-user" name="register user">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="kafka" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=&#34;REGISTER_USER_TOPIC&#34;" target="kafka_publishTopic" />
+          <zeebe:input source="=&#34;BPMN_TOPIC&#34;" target="kafka_receiveTopic" />
+          <zeebe:input source="={ &#34;payload&#34;: { &#34;username&#34;: username } }&#10;" target="kafka_message" />
+          <zeebe:output source="=kafka_response.payload.uuid" target="userId" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1en8okn</bpmn:incoming>
+      <bpmn:outgoing>Flow_08unqfb</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1i2580g" sourceRef="start" targetRef="Gateway_11yw76u" />
+    <bpmn:endEvent id="success" name="user registration complete">
+      <bpmn:incoming>Flow_06nmmr0</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="validate-user" name="validate user">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="kafka" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=&#34;VALIDATE_USER_TOPIC&#34;" target="kafka_publishTopic" />
+          <zeebe:input source="=&#34;BPMN_TOPIC&#34;" target="kafka_receiveTopic" />
+          <zeebe:input source="={ &#34;payload&#34;: { &#34;user&#34;: userId, &#34;data&#34;: userDataId } }&#10;" target="kafka_message" />
+          <zeebe:output source="=kafka_response.payload.confirmed" target="confirmed" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0xf348m</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ucwr7z</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0ucwr7z" sourceRef="validate-user" targetRef="check-registration" />
+    <bpmn:exclusiveGateway id="check-registration">
+      <bpmn:incoming>Flow_0ucwr7z</bpmn:incoming>
+      <bpmn:outgoing>Flow_06nmmr0</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0f4n5td</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_06nmmr0" sourceRef="check-registration" targetRef="success">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=confirmed=true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="reject" name="user registration rejected">
+      <bpmn:incoming>Flow_0f4n5td</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0f4n5td" sourceRef="check-registration" targetRef="reject">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=confirmed!=true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:parallelGateway id="Gateway_11yw76u">
+      <bpmn:incoming>Flow_1i2580g</bpmn:incoming>
+      <bpmn:outgoing>Flow_021lgha</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1en8okn</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_021lgha" sourceRef="Gateway_11yw76u" targetRef="save-user-data" />
+    <bpmn:sequenceFlow id="Flow_1en8okn" sourceRef="Gateway_11yw76u" targetRef="register-user" />
+    <bpmn:parallelGateway id="Gateway_0wr6aie">
+      <bpmn:incoming>Flow_08unqfb</bpmn:incoming>
+      <bpmn:incoming>Flow_0q505td</bpmn:incoming>
+      <bpmn:outgoing>Flow_0xf348m</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_08unqfb" sourceRef="register-user" targetRef="Gateway_0wr6aie" />
+    <bpmn:sequenceFlow id="Flow_0xf348m" sourceRef="Gateway_0wr6aie" targetRef="validate-user" />
+    <bpmn:serviceTask id="save-user-data" name="save user data">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="kafka" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=&#34;SAVE_USER_TOPIC&#34;" target="kafka_publishTopic" />
+          <zeebe:input source="=&#34;BPMN_TOPIC&#34;" target="kafka_receiveTopic" />
+          <zeebe:input source="={ &#34;payload&#34;: { &#34;name&#34;: name, &#34;surname&#34;: surname }}" target="kafka_message" />
+          <zeebe:output source="=kafka_response.payload.uuid" target="userDataId" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_021lgha</bpmn:incoming>
+      <bpmn:outgoing>Flow_0q505td</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0q505td" sourceRef="save-user-data" targetRef="Gateway_0wr6aie" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="user-registration">
+      <bpmndi:BPMNShape id="Event_1wpqyqm_di" bpmnElement="success">
+        <dc:Bounds x="822" y="179" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="801" y="222" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1m4kk3l_di" bpmnElement="check-registration" isMarkerVisible="true">
+        <dc:Bounds x="685" y="172" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0v3qlb2_di" bpmnElement="reject">
+        <dc:Bounds x="822" y="292" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="801" y="335" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_11yw76u_di" bpmnElement="Gateway_11yw76u">
+        <dc:Bounds x="275" y="172" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0vqbvu2_di" bpmnElement="register-user">
+        <dc:Bounds x="350" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
+        <dc:Bounds x="172" y="179" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="151" y="222" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0wr6aie_di" bpmnElement="Gateway_0wr6aie">
+        <dc:Bounds x="475" y="172" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1llfuoz" bpmnElement="validate-user">
+        <dc:Bounds x="550" y="157" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_05np0n0" bpmnElement="save-user-data">
+        <dc:Bounds x="350" y="220" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1i2580g_di" bpmnElement="Flow_1i2580g">
+        <di:waypoint x="208" y="197" />
+        <di:waypoint x="275" y="197" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ucwr7z_di" bpmnElement="Flow_0ucwr7z">
+        <di:waypoint x="650" y="197" />
+        <di:waypoint x="685" y="197" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06nmmr0_di" bpmnElement="Flow_06nmmr0">
+        <di:waypoint x="735" y="197" />
+        <di:waypoint x="822" y="197" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0f4n5td_di" bpmnElement="Flow_0f4n5td">
+        <di:waypoint x="710" y="222" />
+        <di:waypoint x="710" y="310" />
+        <di:waypoint x="822" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_021lgha_di" bpmnElement="Flow_021lgha">
+        <di:waypoint x="300" y="222" />
+        <di:waypoint x="300" y="260" />
+        <di:waypoint x="350" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1en8okn_di" bpmnElement="Flow_1en8okn">
+        <di:waypoint x="300" y="172" />
+        <di:waypoint x="300" y="120" />
+        <di:waypoint x="350" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08unqfb_di" bpmnElement="Flow_08unqfb">
+        <di:waypoint x="450" y="120" />
+        <di:waypoint x="500" y="120" />
+        <di:waypoint x="500" y="172" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xf348m_di" bpmnElement="Flow_0xf348m">
+        <di:waypoint x="525" y="197" />
+        <di:waypoint x="550" y="197" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0q505td_di" bpmnElement="Flow_0q505td">
+        <di:waypoint x="450" y="260" />
+        <di:waypoint x="500" y="260" />
+        <di:waypoint x="500" y="222" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

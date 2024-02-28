@@ -53,7 +53,7 @@ async function kafkaSendReceive(
     zbc.completeJob({
       jobKey: correlationID,
       variables: {
-        'kafka.response': response,
+        'kafka_response': response,
       },
     });
   } catch (error) {
@@ -89,9 +89,9 @@ async function init() {
 
   // Create a Zeebe worker to handle the 'kafka' service task
   const worker = zbc.createWorker<{
-    'kafka.publishTopic': string;
-    'kafka.receiveTopic': string;
-    'kafka.message': Message;
+    'kafka_publishTopic': string;
+    'kafka_receiveTopic': string;
+    'kafka_message': Message;
   }>({
     // Define the task type that this worker will process
     taskType: 'kafka',
@@ -103,22 +103,22 @@ async function init() {
       // Log the job variables for debugging purposes
       console.log(job.variables);
 
-      if (!variables['kafka.publishTopic']) {
+      if (!variables['kafka_publishTopic']) {
         return job.error(
           'NO_TOPIC',
-          'Missing "kafka.publishTopic" in process variables'
+          'Missing "kafka_publishTopic" in process variables'
         );
       }
-      if (!variables['kafka.receiveTopic']) {
+      if (!variables['kafka_receiveTopic']) {
         return job.error(
           'NO_TOPIC',
-          'Missing "kafka.receiveTopic" in process variables'
+          'Missing "kafka_receiveTopic" in process variables'
         );
       }
 
-      const publishTopic = variables['kafka.publishTopic'];
-      const receiveTopic = variables['kafka.receiveTopic'];
-      const message = variables['kafka.message'];
+      const publishTopic = variables['kafka_publishTopic'];
+      const receiveTopic = variables['kafka_receiveTopic'];
+      const message = variables['kafka_message'];
 
       kafkaSendReceive(key, message, publishTopic, receiveTopic);
 
@@ -136,5 +136,5 @@ async function init() {
 init();
 
 // kafka-topics.sh --bootstrap-server kafka:9092 --list
-// kafka-console-consumer.sh --bootstrap-server kafka:9092 --from-beginning --topic REQ_TOPIC --property print.key=true --property print.headers=true
-// kafka-console-producer.sh --bootstrap-server kafka:9092 --topic RES_TOPIC --property parse.headers=true
+// kafka-console-consumer.sh --bootstrap-server kafka:9092 --from-beginning --topic BPMN_TOPIC --property print.key=true --property print.headers=true
+// kafka-console-producer.sh --bootstrap-server kafka:9092 --topic BPMN_TOPIC --property parse.headers=true

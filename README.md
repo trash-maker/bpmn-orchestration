@@ -28,27 +28,27 @@ npx nx run-many --target=docker-build --all=true
 
 Spin up environment:
 ```
-docker-compose up
+docker-compose up -d
 ```
 
 > ℹ️ [nginxproxy/nginx-proxy](https://github.com/nginx-proxy/nginx-proxy) is used as ingress controller. `VIRTUAL_HOST` and `VIRTUAL_PORT` env variables on services are used ad host-based routing.
 
 Open http://zeebe-play.local/view/deployment in your preferred browser.
 
-Deploy the sample bpmn process `/bpmn/test.bpmn`
+Deploy the sample bpmn process `/bpmn/user-registration.bpmn`
 
 Open the loaded process definition and run an instance with following parameters:
 ```json
 {
-  "kafka.publishTopic": "REQ_TOPIC",
-  "kafka.receiveTopic": "RES_TOPIC",
-  "kafka.message": { "payload": { "name": "luke" } }
+  "username": "trash-maker",
+  "name": "stefano",
+  "surname": "pelizzaro"
 }
 ```
 
 See the orchestrated microservice been called and execute the work:
 ```
-docker-compose logs -f booking-api
+docker-compose logs -f data-api users-api validation-api
 ```
 
 ---

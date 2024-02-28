@@ -1,0 +1,53 @@
+{
+  "name": "users-api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/users-api/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/users-api",
+        "main": "apps/users-api/src/main.ts",
+        "tsConfig": "apps/users-api/tsconfig.app.json",
+        "assets": ["apps/users-api/src/assets"],
+        "webpackConfig": "apps/users-api/webpack.config.js",
+        "generatePackageJson": true
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "generateLockfile": true
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "users-api:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "users-api:build:development"
+        },
+        "production": {
+          "buildTarget": "users-api:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "docker-build": {
+      "dependsOn": ["build"],
+      "command": "docker build -f apps/users-api/Dockerfile . -t users-api"
+    }
+  },
+  "tags": []
+}

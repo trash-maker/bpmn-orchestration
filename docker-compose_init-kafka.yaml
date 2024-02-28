@@ -23,7 +23,7 @@ services:
       SEND_TOPIC: BPMN_TOPIC
     depends_on:
       - kafka
-  
+      - init-kafka
   users-api:
     image: users-api:latest
     deploy:
@@ -39,7 +39,7 @@ services:
       SEND_TOPIC: BPMN_TOPIC
     depends_on:
       - kafka
-
+      - init-kafka
   validation-api:
     image: validation-api:latest
     deploy:
@@ -55,6 +55,7 @@ services:
       SEND_TOPIC: BPMN_TOPIC
     depends_on:
       - kafka
+      - init-kafka
 
   zeebe-kafka-worker:
     image: zeebe-kafka-worker:latest
@@ -66,6 +67,7 @@ services:
     depends_on:
       - zeebe
       - kafka
+      - init-kafka
 
   zeebe-play:
     image: ghcr.io/camunda-community-hub/zeebe-play:1.10.1
@@ -110,30 +112,55 @@ services:
 
   # kafka environment
   zookeeper:
-    image: wurstmeister/zookeeper
-    container_name: zookeeper
+    image: docker.io/bitnami/zookeeper:3.8
     ports:
       - "2181:2181"
-  kafka:
-    image: wurstmeister/kafka
-    container_name: kafka
-    ports:
-      - "9092:9092"
+    volumes:
+      - "zookeeper-volume:/bitnami"
     environment:
-      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9092,OUTSIDE://localhost:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
-      KAFKA_LISTENERS: INSIDE://0.0.0.0:9092,OUTSIDE://0.0.0.0:9093
-      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "BPMN_TOPIC:1:1,SAVE_USER_TOPIC:1:1,REGISTER_USER_TOPIC:1:1,VALIDATE_USER_TOPIC:1:1"
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: docker.io/bitnami/kafka:3.3
+    ports:
+      - "9093:9093"
+    volumes:
+      - "kafka-volume:/bitnami"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=CLIENT
     depends_on:
       - zookeeper
 
+  init-kafka:
+    image: docker.io/bitnami/kafka:3.3
+    depends_on:
+      - kafka
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics.sh --bootstrap-server kafka:9092 --list
+
+      echo -e 'Creating kafka topics'
+      kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic BPMN_TOPIC --replication-factor 1 --partitions 1
+      kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic SAVE_USER_TOPIC --replication-factor 1 --partitions 1
+      kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic REGISTER_USER_TOPIC --replication-factor 1 --partitions 1
+      kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic VALIDATE_USER_TOPIC --replication-factor 1 --partitions 1
+
+      echo -e 'Successfully created the following topics:'
+      kafka-topics.sh --bootstrap-server kafka:9092 --list
+      "
 volumes:
   zeebe-data:
   zeebe-play-data:
   kafka-volume:
   zookeeper-volume:
+
 
 networks:
   default:

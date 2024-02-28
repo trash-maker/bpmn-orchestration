@@ -1,0 +1,53 @@
+{
+  "name": "data-api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/data-api/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/data-api",
+        "main": "apps/data-api/src/main.ts",
+        "tsConfig": "apps/data-api/tsconfig.app.json",
+        "assets": ["apps/data-api/src/assets"],
+        "webpackConfig": "apps/data-api/webpack.config.js",
+        "generatePackageJson": true
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "generateLockfile": true
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "data-api:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "data-api:build:development"
+        },
+        "production": {
+          "buildTarget": "data-api:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "docker-build": {
+      "dependsOn": ["build"],
+      "command": "docker build -f apps/data-api/Dockerfile . -t data-api"
+    }
+  },
+  "tags": []
+}

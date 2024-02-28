@@ -1,7 +1,7 @@
 {
-  "name": "booking-api",
+  "name": "validation-api",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/booking-api/src",
+  "sourceRoot": "apps/validation-api/src",
   "projectType": "application",
   "targets": {
     "build": {
@@ -11,11 +11,11 @@
       "options": {
         "target": "node",
         "compiler": "tsc",
-        "outputPath": "dist/apps/booking-api",
-        "main": "apps/booking-api/src/main.ts",
-        "tsConfig": "apps/booking-api/tsconfig.app.json",
-        "assets": ["apps/booking-api/src/assets"],
-        "webpackConfig": "apps/booking-api/webpack.config.js",
+        "outputPath": "dist/apps/validation-api",
+        "main": "apps/validation-api/src/main.ts",
+        "tsConfig": "apps/validation-api/tsconfig.app.json",
+        "assets": ["apps/validation-api/src/assets"],
+        "webpackConfig": "apps/validation-api/webpack.config.js",
         "generatePackageJson": true
       },
       "configurations": {
@@ -29,14 +29,14 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "booking-api:build"
+        "buildTarget": "validation-api:build"
       },
       "configurations": {
         "development": {
-          "buildTarget": "booking-api:build:development"
+          "buildTarget": "validation-api:build:development"
         },
         "production": {
-          "buildTarget": "booking-api:build:production"
+          "buildTarget": "validation-api:build:production"
         }
       }
     },
@@ -46,7 +46,7 @@
     },
     "docker-build": {
       "dependsOn": ["build"],
-      "command": "docker build -f apps/booking-api/Dockerfile . -t booking-api"
+      "command": "docker build -f apps/validation-api/Dockerfile . -t validation-api"
     }
   },
   "tags": []

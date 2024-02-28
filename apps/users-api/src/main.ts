@@ -24,6 +24,6 @@ app.use('/api', router);
 
 const server = app.listen(port, host, () => {
   console.log(
-    `🎉 booking-api up and ready, listening at http://${host}:${port}`
+    `🎉 users-api up and ready, listening at http://${host}:${port}`
   );
 });
